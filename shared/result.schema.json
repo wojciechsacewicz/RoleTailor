@@ -1,0 +1,10 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","title":"RoleTailorResult","type":"object","additionalProperties":false,
+  "required":["runId","company","role","jobUrl","language","fit","artifacts","changeSummary","cvReview"],
+  "properties":{
+    "runId":{"type":"string","minLength":1},"company":{"type":"string","minLength":1},"role":{"type":"string","minLength":1},"jobUrl":{"type":["string","null"]},"language":{"enum":["pl","en"]},"changeSummary":{"type":"array","items":{"type":"string"}},
+    "cvReview":{"type":"array","maxItems":8,"items":{"type":"object","additionalProperties":false,"required":["target","title","comment","priority"],"properties":{"target":{"enum":["headline","contact","proof","experience","profile","skills","education","projects"]},"title":{"type":"string"},"comment":{"type":"string"},"priority":{"type":"integer","minimum":1,"maximum":3}}}},
+    "fit":{"type":"object","additionalProperties":false,"required":["stars","matchScore","inviteLikelihoodEstimate","confidence","recommendation","summary","strengths","gaps","dealbreakers","differentiators"],"properties":{"stars":{"type":"integer","minimum":1,"maximum":5},"matchScore":{"type":"integer","minimum":0,"maximum":100},"inviteLikelihoodEstimate":{"type":"integer","minimum":0,"maximum":100},"confidence":{"enum":["low","medium","high"]},"recommendation":{"enum":["apply","apply-with-caveats","weak-fit","skip"]},"summary":{"type":"string"},"strengths":{"type":"array","items":{"type":"string"}},"gaps":{"type":"array","items":{"type":"string"}},"dealbreakers":{"type":"array","items":{"type":"string"}},"differentiators":{"type":"array","items":{"type":"string"}}}},
+    "artifacts":{"type":"object","additionalProperties":false,"required":["cvPdf","cvSource","applicationMessage","coverLetter"],"properties":{"cvPdf":{"type":"string"},"cvSource":{"type":"string"},"applicationMessage":{"type":"string"},"coverLetter":{"type":"string"}}}
+  }
+}

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Curriculum vitae for {{FULL_NAME}}" />
+    <title>{{FULL_NAME}} · {{HEADLINE}}</title>
+    <link rel="stylesheet" href="./print.css" />
+  </head>
+  <body>
+    <nav class="language-switch" aria-label="CV language"><a href="?lang=en">EN</a><a href="?lang=pl">PL</a></nav>
+    <main id="cv-portfolio">
+      <div class="language language-en">
+        <article class="sheet sheet-one">
+          <header class="hero">
+            <img class="portrait" src="{{PHOTO_PATH}}" alt="{{FULL_NAME}}" />
+            <div class="hero-copy"><p class="kicker">{{FULL_NAME}}</p><h1>{{HEADLINE}}</h1><p class="positioning">{{SUMMARY}}</p></div>
+            <address class="contact"><a href="mailto:{{EMAIL}}">{{EMAIL}}</a><span>{{PHONE}}</span><span>{{LOCATION}}</span><a href="{{LINKEDIN}}">{{LINKEDIN}}</a><a href="{{PORTFOLIO}}">{{PORTFOLIO}}</a><a href="{{GITHUB}}">{{GITHUB}}</a></address>
+          </header>
+          <div class="page-grid">
+            <section class="main-column"><div class="section-heading"><h2>Experience</h2></div><div class="profile-experience">{{EXPERIENCE_HTML}}</div></section>
+            <aside class="side-column"><h2>Profile</h2><p>{{SUMMARY}}</p><h2>Target roles</h2><div class="profile-targets">{{TARGET_ROLES_HTML}}</div><h2>Skills</h2><div class="profile-skills">{{SKILLS_HTML}}</div><h2>Languages</h2><div class="profile-languages">{{LANGUAGES_HTML}}</div></aside>
+          </div>
+        </article>
+        <article class="sheet sheet-two">
+          <header class="page-two-header"><div><p class="kicker dark-kicker">Selected work</p><h2>Projects and evidence</h2></div><span>{{FULL_NAME}}</span></header>
+          <section><div class="section-heading"><h2>Projects</h2></div><div class="profile-projects">{{PROJECTS_HTML}}</div></section>
+          <section class="page-two-grid"><div><div class="section-heading"><h2>Education</h2></div><div class="profile-education">{{EDUCATION_HTML}}</div></div><div><div class="section-heading"><h2>Achievements</h2></div><div class="profile-achievements">{{ACHIEVEMENTS_HTML}}</div></div></section>
+          <footer class="cv-footer"><strong>{{HEADLINE}}</strong><div><a href="mailto:{{EMAIL}}">{{EMAIL}}</a><span>{{LOCATION}}</span></div></footer>
+        </article>
+      </div>
+      <div class="language language-pl">
+        <article class="sheet sheet-one">
+          <header class="hero">
+            <img class="portrait" src="{{PHOTO_PATH}}" alt="{{FULL_NAME}}" />
+            <div class="hero-copy"><p class="kicker">{{FULL_NAME}}</p><h1>{{HEADLINE}}</h1><p class="positioning">{{SUMMARY}}</p></div>
+            <address class="contact"><a href="mailto:{{EMAIL}}">{{EMAIL}}</a><span>{{PHONE}}</span><span>{{LOCATION}}</span><a href="{{LINKEDIN}}">{{LINKEDIN}}</a><a href="{{PORTFOLIO}}">{{PORTFOLIO}}</a><a href="{{GITHUB}}">{{GITHUB}}</a></address>
+          </header>
+          <div class="page-grid">
+            <section class="main-column"><div class="section-heading"><h2>Doświadczenie</h2></div><div class="profile-experience">{{EXPERIENCE_HTML}}</div></section>
+            <aside class="side-column"><h2>Profil</h2><p>{{SUMMARY}}</p><h2>Role docelowe</h2><div class="profile-targets">{{TARGET_ROLES_HTML}}</div><h2>Umiejętności</h2><div class="profile-skills">{{SKILLS_HTML}}</div><h2>Języki</h2><div class="profile-languages">{{LANGUAGES_HTML}}</div></aside>
+          </div>
+        </article>
+        <article class="sheet sheet-two">
+          <header class="page-two-header"><div><p class="kicker dark-kicker">Wybrana praca</p><h2>Projekty i dowody</h2></div><span>{{FULL_NAME}}</span></header>
+          <section><div class="section-heading"><h2>Projekty</h2></div><div class="profile-projects">{{PROJECTS_HTML}}</div></section>
+          <section class="page-two-grid"><div><div class="section-heading"><h2>Edukacja</h2></div><div class="profile-education">{{EDUCATION_HTML}}</div></div><div><div class="section-heading"><h2>Osiągnięcia</h2></div><div class="profile-achievements">{{ACHIEVEMENTS_HTML}}</div></div></section>
+          <footer class="cv-footer"><strong>{{HEADLINE}}</strong><div><a href="mailto:{{EMAIL}}">{{EMAIL}}</a><span>{{LOCATION}}</span></div></footer>
+        </article>
+      </div>
+    </main>
+  </body>
+</html>
