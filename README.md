@@ -12,6 +12,19 @@ RoleTailor is a local Linux desktop app for tailoring CVs and application copy w
 
 RoleTailor stores your profile and generated applications on your machine. It has no hosted RoleTailor backend, telemetry, API-key field, or token database. Codex-powered tailoring, AI cleanup, and editor features send prompts and relevant profile, job, message, and attachment content to OpenAI for model processing under your Codex account. Importing a job by URL also contacts that site directly. ChatGPT authentication stays in Codex's own auth store.
 
+<p align="center">
+  <img src="docs/screenshots/onboarding-welcome.png" width="100%" alt="RoleTailor onboarding welcome screen with the Build with AI option">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/build-with-ai.png" width="49%" alt="Build with AI dialog accepting files, folders, and a note for Codex">
+  <img src="docs/screenshots/ai-draft-profile.png" width="49%" alt="RoleTailor onboarding populated with a draft created from imported materials">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/workspace.png" width="100%" alt="RoleTailor application workspace with an extracted job listing">
+</p>
+
 > [!NOTE]
 > RoleTailor is usable today, but distribution is still source-first. The current packaged builds target x86_64 Linux.
 
@@ -40,7 +53,9 @@ If you use Debian, Ubuntu, or Fedora, follow the distro commands in [`INSTALL.md
 
 ## First run
 
-Onboarding asks for the material RoleTailor can use: contact details, target roles, skills, experience, education, projects, languages, achievements, and writing preferences. You can type your writing profile into the app or import a `SKILL.md`; the built-in tutorial explains how to create one from your own messages.
+Onboarding asks for the material RoleTailor can use: contact details, target roles, skills, experience, education, projects, languages, achievements, and writing preferences. You can fill it manually or choose **Build with AI**, add individual files or an entire folder, and leave a note explaining what Codex should prioritise. Codex drafts the wizard from those materials, flags missing or uncertain details, and leaves the result open for review before anything is saved.
+
+You can type your writing profile directly into the app or import a `SKILL.md`; the built-in tutorial explains how to create one from your own messages. Files selected for **Build with AI** are copied into a private temporary workspace, sent to OpenAI through your Codex account for analysis, and deleted from that workspace when the import finishes.
 
 RoleTailor turns that input into a private Base CV under your operating system's application-data directory. Editing your profile regenerates the Base CV. Each job application gets a separate workspace, so changes made for one role cannot bleed into another.
 

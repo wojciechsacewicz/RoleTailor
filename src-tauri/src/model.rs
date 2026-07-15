@@ -50,6 +50,26 @@ pub struct UserProfile {
     pub photo_filename: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProfileImportSource {
+    pub path: String,
+    pub name: String,
+    pub kind: String,
+    pub eligible_files: usize,
+    pub total_bytes: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProfileImportResult {
+    pub profile: UserProfile,
+    pub warnings: Vec<String>,
+    pub source_summary: String,
+    #[serde(default)]
+    pub processed_files: usize,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct ExperienceEntry {

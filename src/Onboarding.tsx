@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import {
@@ -9,6 +9,8 @@ import {
   Check,
   CircleUserRound,
   FileHeart,
+  Files,
+  FolderOpen,
   GraduationCap,
   ImagePlus,
   FileUp,
@@ -19,7 +21,9 @@ import {
   Rocket,
   ShieldCheck,
   Sparkles,
+  TriangleAlert,
   Trash2,
+  WandSparkles,
   X,
 } from "lucide-react";
 import { backend, onAuthChanged } from "./lib/backend";
@@ -27,6 +31,8 @@ import type {
   EducationEntry,
   ExperienceEntry,
   LanguageEntry,
+  ProfileImportResult,
+  ProfileImportSource,
   ProjectEntry,
   SetupState,
   UserProfile,
@@ -67,6 +73,10 @@ const validOptionalUrl = (value?: string) => {
   if (!value?.trim()) return true;
   try { return ["http:", "https:"].includes(new URL(value).protocol); } catch { return false; }
 };
+const formatBytes = (value:number) => value < 1024 * 1024 ? `${Math.max(1, Math.round(value / 1024))} KB` : `${(value / 1024 / 1024).toFixed(1)} MB`;
+const demoImportedProfile = ():UserProfile => ({
+  fullName: "Alex Morgan", email: "alex@example.com", phone: "+48 500 000 000", location: "Warsaw, Poland · Remote", linkedin: "https://linkedin.com/in/alex-morgan", portfolio: "https://alexmorgan.dev", github: "https://github.com/alexmorgan", headline: "Product engineer building reliable AI workflows", summary: "Product-minded software engineer with experience shipping local-first AI tools, production React interfaces and dependable backend systems.", targetRoles: ["Product Engineer", "AI Engineer", "Senior Frontend Engineer"], skills: ["TypeScript", "React", "Rust", "Python", "PostgreSQL", "Tauri"], experiences: [{ role: "Senior Software Engineer", company: "Northstar Labs", location: "Remote", startDate: "2023-02", endDate: "", current: true, highlights: ["Shipped a local-first AI workspace used across product and operations teams.", "Reduced document-processing time by 38% through a typed ingestion pipeline."] }], education: [{ school: "Warsaw University of Technology", degree: "BSc", field: "Computer Science", startDate: "2018", endDate: "2022" }], projects: [{ name: "Signal Desk", url: "https://signaldesk.example.com", description: "A desktop workspace for reviewing and organising research with AI assistance.", highlights: ["Designed the end-to-end product and local data model."], technologies: ["React", "Rust", "Tauri"] }], languages: [{ name: "Polish", proficiency: "Native" }, { name: "English", proficiency: "C1 · Professional" }], achievements: ["Speaker at Local First Warsaw — 2025"], preferredLanguage: "en", writingTone: "direct", writingNotes: "Use short, concrete sentences. Prefer specific examples over inflated claims.", additionalFacts: "Open to remote roles across the EU.",
+});
 
 const steps = [
   { label: "Welcome", icon: Sparkles },
@@ -104,18 +114,33 @@ function RemoveButton({ onClick, label }: { onClick:()=>void; label:string }) {
   return <button type="button" className="collection-remove" onClick={onClick} aria-label={label}><Trash2 /></button>;
 }
 
-function StepIntro() {
+function StepIntro({ onBuildWithAi, busy }: { onBuildWithAi:()=>void; busy:boolean }) {
   return <div className="onboarding-intro">
     <div className="onboarding-orbit" aria-hidden="true"><span /><span /><span /></div>
     <p className="onboarding-kicker"><LockKeyhole /> Private by design</p>
     <h1>Build a CV workspace<br />that starts with <i>you.</i></h1>
     <p>RoleTailor creates a private career profile on this device, then uses it to tailor honest, role-specific applications. You stay in control of the facts, wording and files it works from.</p>
+    <button type="button" className="ai-import-trigger" onClick={onBuildWithAi} disabled={busy}><span><WandSparkles /></span><span><strong>Build with AI</strong><small>Add CVs, notes, exports, images or a whole folder. Codex drafts the wizard for you.</small></span><ArrowRight /></button>
     <div className="privacy-points">
       <div><ShieldCheck /><span><strong>Local profile</strong>Your career data stays in RoleTailor's application folder.</span></div>
       <div><Sparkles /><span><strong>Your facts only</strong>Every generated claim must trace back to information you provide.</span></div>
       <div><Rocket /><span><strong>Reusable base CV</strong>Update once, then tailor a fresh copy for each application.</span></div>
     </div>
   </div>;
+}
+
+function AiImportModal({ sources, note, importing, codexInstalled, authenticated, onAddFiles, onAddFolder, onRemove, onNote, onBuild, onClose }: { sources:ProfileImportSource[]; note:string; importing:boolean; codexInstalled:boolean; authenticated:boolean; onAddFiles:()=>void; onAddFolder:()=>void; onRemove:(path:string)=>void; onNote:(value:string)=>void; onBuild:()=>void; onClose:()=>void }) {
+  const fileCount = sources.reduce((total, source) => total + source.eligibleFiles, 0);
+  return createPortal(<div className="ai-import-backdrop" role="presentation" onMouseDown={() => !importing && onClose()}><section className="ai-import-modal" role="dialog" aria-modal="true" aria-labelledby="ai-import-title" onMouseDown={(event) => event.stopPropagation()}>
+    <button type="button" className="ai-import-close" onClick={onClose} disabled={importing} aria-label="Close"><X /></button>
+    <p className="onboarding-kicker"><WandSparkles /> AI-assisted setup</p><h2 id="ai-import-title">Give Codex the raw material.</h2><p className="ai-import-lead">Add anything that describes your work. Codex will extract a draft profile, flag uncertainty, and place every usable fact into the right onboarding step.</p>
+    <div className="ai-import-actions"><button type="button" onClick={onAddFiles} disabled={importing}><Files /><span><strong>Add files</strong><small>PDF, DOCX, Markdown, images and more</small></span></button><button type="button" onClick={onAddFolder} disabled={importing}><FolderOpen /><span><strong>Add a folder</strong><small>Scan supported files recursively</small></span></button></div>
+    {sources.length > 0 ? <div className="ai-import-sources"><div className="ai-import-sources-heading"><span>Selected sources</span><em>{fileCount} file{fileCount === 1 ? "" : "s"}</em></div>{sources.map((source) => <div className="ai-import-source" key={source.path}>{source.kind === "folder" ? <FolderOpen /> : <Files />}<span><strong>{source.name}</strong><small>{source.kind === "folder" ? `${source.eligibleFiles} supported files` : formatBytes(source.totalBytes)}</small></span><button type="button" onClick={() => onRemove(source.path)} disabled={importing} aria-label={`Remove ${source.name}`}><X /></button></div>)}</div> : <div className="ai-import-empty"><Files /><span><strong>No sources yet</strong><small>Add one or more files, or select an entire folder.</small></span></div>}
+    <label className="ai-import-note"><span>Note for Codex <em>Optional</em></span><textarea value={note} onChange={(event) => onNote(event.target.value)} maxLength={4000} rows={4} disabled={importing} placeholder="Focus on product engineering roles. My latest CV has the correct dates. Use the Slack export only to learn my writing style..." /><small>Use this to resolve source priority, explain context, or say what kind of role you want.</small></label>
+    <div className="ai-import-disclosure"><LockKeyhole /><p><strong>Review before saving.</strong><span>Selected content is sent to OpenAI through your Codex account for this analysis. Temporary copies are deleted when the import finishes.</span></p></div>
+    {!codexInstalled ? <p className="ai-import-error"><TriangleAlert />Codex CLI is required before AI import can run.</p> : null}
+    <footer><button type="button" className="ai-import-cancel" onClick={onClose} disabled={importing}>Cancel</button><button type="button" className="ai-import-build" onClick={onBuild} disabled={sources.length === 0 || !codexInstalled || importing}>{importing ? <LoaderCircle className="spin" /> : <WandSparkles />}{importing ? "Codex is building your profile…" : authenticated ? "Build profile draft" : "Connect ChatGPT & build"}</button></footer>
+  </section></div>, document.body);
 }
 
 function StepBasics({ profile, update, photoPath, onPhoto }: { profile:UserProfile; update:(patch:Partial<UserProfile>)=>void; photoPath:string|null; onPhoto:()=>void }) {
@@ -210,7 +235,7 @@ function StepReady({ profile, state, saved }: { profile:UserProfile; state:Setup
   return <div className="ready-step">
     <div className="ready-mark"><ShieldCheck /></div><p className="onboarding-kicker">Your private workspace</p><h2>{saved ? "Profile saved. You're ready." : `Ready to build ${profile.fullName.split(" ")[0] || "your"}’s base CV.`}</h2><p>RoleTailor will turn these facts into a local, editable CV workspace. Future runs receive a copy, so the source stays safe.</p>
     <div className="ready-summary"><div><strong>{profile.skills.length}</strong><span>skills</span></div><div><strong>{facts}</strong><span>career entries</span></div><div><strong>{profile.targetRoles.length}</strong><span>target roles</span></div></div>
-    <div className="system-checks"><div className={state.codexInstalled ? "ok" : "bad"}><span>{state.codexInstalled ? <Check /> : "!"}</span><p><strong>{state.codexInstalled ? "Codex CLI detected" : "Codex CLI is required"}</strong><small>{state.codexVersion || "Install Codex, then retry this step."}</small></p></div><div className={state.authenticated ? "ok" : "pending"}><span>{state.authenticated ? <Check /> : <LockKeyhole />}</span><p><strong>{state.authenticated ? "ChatGPT connected" : "Connect your ChatGPT account"}</strong><small>{state.accountLabel || "RoleTailor never receives or stores your token."}</small></p></div><div className="ok"><span><Check /></span><p><strong>Local-only career data</strong><small>Saved under {state.dataPath || "RoleTailor application data"}.</small></p></div></div>
+    <div className="system-checks"><div className={state.codexInstalled ? "ok" : "bad"}><span>{state.codexInstalled ? <Check /> : "!"}</span><p><strong>{state.codexInstalled ? "Codex CLI detected" : "Codex CLI is required"}</strong><small>{state.codexVersion || "Install Codex, then retry this step."}</small></p></div><div className={state.authenticated ? "ok" : "pending"}><span>{state.authenticated ? <Check /> : <LockKeyhole />}</span><p><strong>{state.authenticated ? "ChatGPT connected" : "Connect your ChatGPT account"}</strong><small>{state.accountLabel || "RoleTailor never receives or stores your token."}</small></p></div><div className="ok"><span><Check /></span><p><strong>Local profile storage</strong><small>Saved under {state.dataPath || "RoleTailor application data"}.</small></p></div></div>
     {state.issues.filter((issue) => !issue.toLowerCase().includes("profile")).map((issue) => <p className="onboarding-issue" key={issue}>{issue}</p>)}
   </div>;
 }
@@ -223,18 +248,59 @@ export default function Onboarding({ state: initialState, editing = false, onCom
   const [photoPath, setPhotoPath] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importSources, setImportSources] = useState<ProfileImportSource[]>([]);
+  const [importNote, setImportNote] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importReview, setImportReview] = useState<ProfileImportResult | null>(null);
+  const [profileChanged, setProfileChanged] = useState(false);
   const loginId = useRef<string | null>(null);
-  const update = (patch:Partial<UserProfile>) => { setProfile((current) => ({ ...current, ...patch })); setSaved(false); };
+  const loginPurpose = useRef<"finish"|"import"|null>(null);
+  const update = (patch:Partial<UserProfile>) => { setProfile((current) => ({ ...current, ...patch })); setProfileChanged(true); setSaved(false); };
+  const mergeImportSources = (next:ProfileImportSource[]) => setImportSources((current) => [...current, ...next.filter((source) => !current.some((item) => item.path === source.path))]);
+  const chooseImportFiles = async () => {
+    try {
+      const next = isTauri() ? await backend.chooseProfileImportFiles() : [{ path: "/demo/cv.pdf", name: "alex-morgan-cv.pdf", kind: "file" as const, eligibleFiles: 1, totalBytes: 482_000 }, { path: "/demo/writing", name: "writing-samples", kind: "folder" as const, eligibleFiles: 8, totalBytes: 238_000 }];
+      mergeImportSources(next);
+    } catch (error) { onError(error); }
+  };
+  const chooseImportFolder = async () => {
+    try {
+      const next = isTauri() ? await backend.chooseProfileImportFolder() : { path: "/demo/career", name: "career", kind: "folder" as const, eligibleFiles: 14, totalBytes: 1_820_000 };
+      if (next) mergeImportSources([next]);
+    } catch (error) { onError(error); }
+  };
+  const executeProfileImport = useCallback(async () => {
+    setBusy(true); setImporting(true);
+    try {
+      const result = isTauri() ? await backend.importProfileWithAi(importSources.map((source) => source.path), importNote) : { profile: demoImportedProfile(), warnings: ["Target roles were inferred from repeated role titles; review them before saving.", "No portrait was selected."], sourceSummary: "Used a CV, project notes, and writing samples to draft the profile.", processedFiles: importSources.reduce((total, source) => total + source.eligibleFiles, 0) };
+      setProfile(result.profile); setImportReview(result); setProfileChanged(true); setSaved(false); setImportOpen(false); setStep(1);
+    } catch (error) { onError(error); } finally { setBusy(false); setImporting(false); }
+  }, [importNote, importSources, onError]);
+  const beginProfileImport = async () => {
+    if (!state.codexInstalled) { onError("Install Codex CLI before using AI import."); return; }
+    if (!state.authenticated && isTauri()) {
+      setBusy(true); setImporting(true); loginPurpose.current = "import";
+      try { const login = await backend.login(); loginId.current = login.loginId; await openUrl(login.authUrl); } catch (error) { setBusy(false); setImporting(false); loginPurpose.current = null; onError(error); }
+      return;
+    }
+    await executeProfileImport();
+  };
   useEffect(() => {
     let dispose: (() => void) | undefined;
     void onAuthChanged(async (event) => {
       if (!loginId.current || event.loginId !== loginId.current) return;
       loginId.current = null;
-      if (!event.authenticated) { setBusy(false); onError(event.error || "ChatGPT sign-in was not completed."); return; }
-      try { const next = await backend.setup(); setState(next); onComplete(next); } catch (error) { onError(error); } finally { setBusy(false); }
+      const purpose = loginPurpose.current;
+      loginPurpose.current = null;
+      if (!event.authenticated) { setBusy(false); setImporting(false); onError(event.error || "ChatGPT sign-in was not completed."); return; }
+      try {
+        const next = await backend.setup(); setState(next);
+        if (purpose === "import") await executeProfileImport(); else onComplete(next);
+      } catch (error) { onError(error); } finally { if (purpose !== "import") setBusy(false); }
     }).then((unlisten) => { dispose = unlisten; }).catch(() => undefined);
     return () => { dispose?.(); if (loginId.current) void backend.cancelLogin(loginId.current); };
-  }, [onComplete, onError]);
+  }, [executeProfileImport, onComplete, onError]);
   const valid = useMemo(() => {
     const basicsValid = profile.fullName.trim().length >= 2
       && /^\S+@\S+\.\S+$/.test(profile.email.trim())
@@ -257,7 +323,7 @@ export default function Onboarding({ state: initialState, editing = false, onCom
     return true;
   }, [profile, step]);
   const choosePhoto = async () => {
-    try { const path = isTauri() ? await backend.chooseProfilePhoto() : "/demo/profile-photo.jpg"; if (path) setPhotoPath(path); } catch (error) { onError(error); }
+    try { const path = isTauri() ? await backend.chooseProfilePhoto() : "/demo/profile-photo.jpg"; if (path) { setPhotoPath(path); setProfileChanged(true); setSaved(false); } } catch (error) { onError(error); }
   };
   const importWritingProfile = async () => {
     try {
@@ -270,15 +336,15 @@ export default function Onboarding({ state: initialState, editing = false, onCom
   const finish = async () => {
     setBusy(true);
     try {
-      const next = recovering
+      const next = recovering && !profileChanged
         ? state
         : isTauri()
           ? await backend.saveProfile(profile, photoPath)
           : { ...state, profile, buildValid: true, issues: [] };
-      setState(next); setProfile(next.profile || profile); setSaved(true);
+      setState(next); setProfile(next.profile || profile); setProfileChanged(false); setSaved(true);
       if (!next.codexInstalled || !next.buildValid) { setBusy(false); return; }
       if (editing || next.authenticated) { onComplete(next); setBusy(false); return; }
-      const login = await backend.login(); loginId.current = login.loginId; await openUrl(login.authUrl);
+      loginPurpose.current = "finish"; const login = await backend.login(); loginId.current = login.loginId; await openUrl(login.authUrl);
     } catch (error) { setBusy(false); onError(error); }
   };
   const retry = async () => {
@@ -290,7 +356,7 @@ export default function Onboarding({ state: initialState, editing = false, onCom
     } catch (error) { onError(error); } finally { setBusy(false); }
   };
   const renderStep = () => {
-    if (step === 0) return <StepIntro />;
+    if (step === 0) return <StepIntro onBuildWithAi={() => setImportOpen(true)} busy={busy} />;
     if (step === 1) return <StepBasics profile={profile} update={update} photoPath={photoPath} onPhoto={() => void choosePhoto()} />;
     if (step === 2) return <StepDirection profile={profile} update={update} />;
     if (step === 3) return <StepExperience profile={profile} update={update} />;
@@ -300,7 +366,8 @@ export default function Onboarding({ state: initialState, editing = false, onCom
     return <StepReady profile={profile} state={state} saved={saved} />;
   };
   return <main className="onboarding-shell">
-    <aside className="onboarding-rail"><div className="onboarding-logo"><span><i /><i /></span><strong>RoleTailor</strong></div><nav>{steps.map(({ label, icon: Icon }, index) => <button type="button" key={label} className={index === step ? "active" : index < step ? "done" : ""} disabled={recovering && index !== step} onClick={() => index < step && setStep(index)}><span>{index < step ? <Check /> : <Icon />}</span><em>{String(index).padStart(2, "0")}</em><strong>{label}</strong></button>)}</nav><div className="rail-note"><LockKeyhole /><span><strong>Stored on this device</strong>No career data is committed to the repository.</span></div></aside>
-    <section className="onboarding-stage"><div className="onboarding-progress"><span style={{ width: `${(step / (steps.length - 1)) * 100}%` }} /></div><div className="onboarding-card" key={step}>{renderStep()}</div><footer className="onboarding-actions">{step > 0 && !recovering ? <button type="button" className="back" onClick={() => setStep((current) => current - 1)} disabled={busy}><ArrowLeft />Back</button> : editing && onCancel ? <button type="button" className="back" onClick={onCancel}>Cancel</button> : <span />}{step < steps.length - 1 ? <button type="button" className="continue" onClick={() => setStep((current) => current + 1)} disabled={!valid}>Continue<ArrowRight /></button> : <div className="finish-actions">{!state.codexInstalled || !state.buildValid ? <button type="button" className="retry" onClick={() => void retry()} disabled={busy}>Retry checks</button> : null}{!recovering || (state.codexInstalled && state.buildValid) ? <button type="button" className="continue finish" onClick={() => void finish()} disabled={busy}>{busy ? <LoaderCircle className="spin" /> : <Sparkles />}{busy ? (loginId.current ? "Waiting for ChatGPT…" : "Building your workspace…") : editing ? "Save profile" : state.authenticated ? "Finish setup" : "Save & connect ChatGPT"}</button> : null}</div>}</footer></section>
+    <aside className="onboarding-rail"><div className="onboarding-logo"><span><i /><i /></span><strong>RoleTailor</strong></div><nav>{steps.map(({ label, icon: Icon }, index) => <button type="button" key={label} className={index === step ? "active" : index < step ? "done" : ""} disabled={recovering && !profileChanged && index !== step} onClick={() => index < step && setStep(index)}><span>{index < step ? <Check /> : <Icon />}</span><em>{String(index).padStart(2, "0")}</em><strong>{label}</strong></button>)}</nav><button type="button" className="rail-ai-import" onClick={() => setImportOpen(true)} disabled={busy}><WandSparkles /><span><strong>Build with AI</strong><small>Import files or a folder</small></span></button><div className="rail-note"><LockKeyhole /><span><strong>Stored on this device</strong>No career data is committed to the repository.</span></div></aside>
+    <section className="onboarding-stage"><div className="onboarding-progress"><span style={{ width: `${(step / (steps.length - 1)) * 100}%` }} /></div><div className="onboarding-card" key={step}>{importReview && step > 0 ? <div className="ai-import-review"><WandSparkles /><div><strong>AI draft ready · {importReview.processedFiles} files reviewed</strong><span>{importReview.sourceSummary} Check every step before saving.</span>{importReview.warnings.length > 0 ? <details><summary>{importReview.warnings.length} warning{importReview.warnings.length === 1 ? "" : "s"} to review</summary><ul>{importReview.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></details> : <small>No import warnings.</small>}</div><button type="button" onClick={() => setImportReview(null)} aria-label="Dismiss import summary"><X /></button></div> : null}{renderStep()}</div><footer className="onboarding-actions">{step > 0 && !recovering ? <button type="button" className="back" onClick={() => setStep((current) => current - 1)} disabled={busy}><ArrowLeft />Back</button> : editing && onCancel ? <button type="button" className="back" onClick={onCancel}>Cancel</button> : <span />}{step < steps.length - 1 ? <button type="button" className="continue" onClick={() => setStep((current) => current + 1)} disabled={!valid}>Continue<ArrowRight /></button> : <div className="finish-actions">{!state.codexInstalled || !state.buildValid ? <button type="button" className="retry" onClick={() => void retry()} disabled={busy}>Retry checks</button> : null}{!recovering || (state.codexInstalled && state.buildValid) ? <button type="button" className="continue finish" onClick={() => void finish()} disabled={busy}>{busy ? <LoaderCircle className="spin" /> : <Sparkles />}{busy ? (loginId.current ? "Waiting for ChatGPT…" : "Building your workspace…") : editing ? "Save profile" : state.authenticated ? "Finish setup" : "Save & connect ChatGPT"}</button> : null}</div>}</footer></section>
+    {importOpen ? <AiImportModal sources={importSources} note={importNote} importing={importing} codexInstalled={state.codexInstalled} authenticated={state.authenticated} onAddFiles={() => void chooseImportFiles()} onAddFolder={() => void chooseImportFolder()} onRemove={(path) => setImportSources((current) => current.filter((source) => source.path !== path))} onNote={setImportNote} onBuild={() => void beginProfileImport()} onClose={() => !importing && setImportOpen(false)} /> : null}
   </main>;
 }

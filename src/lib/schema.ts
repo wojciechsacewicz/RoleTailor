@@ -33,6 +33,8 @@ export interface UserProfile {
   additionalFacts:string;
   photoFilename?:string;
 }
+export interface ProfileImportSource {path:string;name:string;kind:'file'|'folder';eligibleFiles:number;totalBytes:number}
+export interface ProfileImportResult {profile:UserProfile;warnings:string[];sourceSummary:string;processedFiles:number}
 export interface SetupState {codexInstalled:boolean;codexVersion?:string;authenticated:boolean;accountLabel?:string;profile?:UserProfile;buildValid:boolean;issues:string[];dataPath:string}
 export type CvReview=z.infer<typeof cvReviewSchema>;
 export interface EditorDocument {runId:string;isBase:boolean;html:string;css:string;imagePath?:string;assetRoot:string;pdfPath?:string;fitGaps:string[];annotations:CvReview[]}

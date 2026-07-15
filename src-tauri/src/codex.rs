@@ -14,9 +14,54 @@ pub struct Client {
 }
 impl Client {
     pub async fn spawn() -> Result<Self, String> {
+        Self::spawn_with_args(&[]).await
+    }
+
+    pub async fn spawn_isolated() -> Result<Self, String> {
+        Self::spawn_with_args(&[
+            "--disable",
+            "apps",
+            "--disable",
+            "plugins",
+            "--disable",
+            "remote_plugin",
+            "--disable",
+            "browser_use",
+            "--disable",
+            "browser_use_external",
+            "--disable",
+            "browser_use_full_cdp_access",
+            "--disable",
+            "computer_use",
+            "--disable",
+            "in_app_browser",
+            "--disable",
+            "image_generation",
+            "--disable",
+            "multi_agent",
+            "--disable",
+            "hooks",
+            "-c",
+            "mcp_servers={}",
+            "-c",
+            "plugins={}",
+            "-c",
+            "skills.config=[]",
+            "-c",
+            "project_doc_max_bytes=0",
+            "-c",
+            "web_search=\"disabled\"",
+            "-c",
+            "shell_environment_policy.inherit=\"core\"",
+        ])
+        .await
+    }
+
+    async fn spawn_with_args(args: &[&str]) -> Result<Self, String> {
         let mut command = Command::new("codex");
         command
             .args(["app-server", "--stdio"])
+            .args(args)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::null())
@@ -43,7 +88,7 @@ impl Client {
             pending: VecDeque::new(),
             next: 1,
         };
-        c.request("initialize",json!({"clientInfo":{"name":"RoleTailor","title":"RoleTailor","version":"0.1.0"},"capabilities":null})).await?;
+        c.request("initialize",json!({"clientInfo":{"name":"RoleTailor","title":"RoleTailor","version":"0.1.0"},"capabilities":{"experimentalApi":true}})).await?;
         c.notify("initialized", None).await?;
         Ok(c)
     }

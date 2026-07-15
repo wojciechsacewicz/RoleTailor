@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import type { AnalysisProfile, CvReview, DebugEvent, EditorChatLine, EditorChatReply, EditorDocument, JobPreview, RunResult, RunSummary, SetupState, UserProfile } from "./schema";
+import type { AnalysisProfile, CvReview, DebugEvent, EditorChatLine, EditorChatReply, EditorDocument, JobPreview, ProfileImportResult, ProfileImportSource, RunResult, RunSummary, SetupState, UserProfile } from "./schema";
 import { resultSchema } from "./schema";
 export const backend = {
   setup: () => invoke<SetupState>("setup_state"),
@@ -8,6 +8,10 @@ export const backend = {
     invoke<SetupState>("save_user_profile", { profile, photoPath: photoPath ?? null }),
   chooseProfilePhoto: () => invoke<string | null>("choose_profile_photo"),
   chooseWritingProfile: () => invoke<string | null>("choose_writing_profile"),
+  chooseProfileImportFiles: () => invoke<ProfileImportSource[]>("choose_profile_import_files"),
+  chooseProfileImportFolder: () => invoke<ProfileImportSource | null>("choose_profile_import_folder"),
+  importProfileWithAi: (sourcePaths: string[], note: string) =>
+    invoke<ProfileImportResult>("import_profile_with_ai", { sourcePaths, note }),
   login: () =>
     invoke<{ authUrl: string; loginId: string }>(
       "login_chatgpt",
