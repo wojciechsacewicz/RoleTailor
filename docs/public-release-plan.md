@@ -40,7 +40,7 @@ Exit gate: an installed release can complete onboarding and create a PDF without
 - [x] Replace the existing history with a reviewed clean-root snapshot and a generic noreply author.
 - [x] Remove legacy local and remote-tracking refs, expire reflogs, prune unreachable objects, and verify the object database.
 - [x] Run secret, PII, path, binary-artifact, and author scans against every remaining ref and the working tree.
-- [ ] Clone the final candidate repository into an empty directory and run the complete verification suite there.
+- [x] Clone the final candidate repository into an empty directory and run the complete verification suite there.
 - [x] Inspect release archives and generated bundles for unintended local files.
 - [x] Obtain a final independent review of the clean candidate and address its release-path and reporting-channel findings.
 - [ ] Create a fresh empty remote or explicitly purge the old private remote before changing visibility.
