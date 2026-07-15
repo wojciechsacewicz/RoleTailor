@@ -20,13 +20,14 @@ Exit gate: a fresh clone can reach a usable Base CV without any private CV repos
 - [x] Remove personal package identifiers and demo paths.
 - [x] Ignore local profile stores, exports, databases, environment files, generated PDFs, and private migration backups.
 - [ ] Choose a public license and add `LICENSE`; this is an ownership decision and should be explicit.
-- [x] Add contribution and private security-reporting policies without publishing personal contact details.
+- [x] Add contribution and security-reporting policies without publishing personal contact details.
 
 Exit gate: a scan of tracked files reports no real contact details, portraits, CVs, employer history, private paths, tokens, or application outputs.
 
 ## Phase 3 — Distribution hardening
 
 - [x] Bundle the neutral template, fonts, schema, and Chromium-based PDF renderer as application resources instead of relying on a source checkout at runtime.
+- [x] Strip and remap developer build paths from release binaries, with an automated post-build path audit.
 - [ ] Add signed release artifacts and a documented update channel.
 - [ ] Test onboarding, profile regeneration, PDF output, and upgrades on clean Linux installations.
 - [ ] Define schema-versioned profile migrations before changing the stored profile format.
@@ -36,12 +37,12 @@ Exit gate: an installed release can complete onboarding and create a PDF without
 
 ## Phase 4 — Create publishable history
 
-- [ ] Replace the existing history with one reviewed clean-root snapshot and a noreply author.
-- [ ] Remove legacy local and remote-tracking refs, expire reflogs, prune unreachable objects, and verify the object database.
-- [ ] Run secret, PII, path, binary-artifact, and author scans against every remaining ref and the working tree.
-- [ ] Clone the candidate repository into an empty directory and run the complete verification suite there.
-- [ ] Inspect release archives and generated bundles for unintended local files.
-- [ ] Obtain a final independent review of the clean candidate.
+- [x] Replace the existing history with a reviewed clean-root snapshot and a generic noreply author.
+- [x] Remove legacy local and remote-tracking refs, expire reflogs, prune unreachable objects, and verify the object database.
+- [x] Run secret, PII, path, binary-artifact, and author scans against every remaining ref and the working tree.
+- [ ] Clone the final candidate repository into an empty directory and run the complete verification suite there.
+- [x] Inspect release archives and generated bundles for unintended local files.
+- [x] Obtain a final independent review of the clean candidate and address its release-path and reporting-channel findings.
 - [ ] Create a fresh empty remote or explicitly purge the old private remote before changing visibility.
 
 Exit gate: the fresh public candidate contains only intended source, neutral fixtures, public metadata, and reviewed history.

@@ -60,6 +60,7 @@ NO_STRIP=1 npm run tauri:build
 ```
 
 `NO_STRIP=1` avoids an incompatibility between linuxdeploy's older `strip` and current Arch libraries containing ELF `.relr.dyn` sections.
+The release wrapper still strips Rust symbols, remaps local source paths, and fails the build if the resulting binaries contain the developer's home or checkout path.
 
 ## Security and privacy boundaries
 
@@ -71,7 +72,7 @@ NO_STRIP=1 npm run tauri:build
 
 ## Contributing and security
 
-Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before submitting changes. Security issues and accidental personal-data exposure should follow the private reporting process in [`SECURITY.md`](SECURITY.md), not a public issue.
+Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before submitting changes. Security issues and accidental personal-data exposure should follow the reporting process in [`SECURITY.md`](SECURITY.md); never put sensitive details in a public issue.
 
 The repository is prepared as a clean public snapshot with neutral templates and no runtime profile data. A public license is intentionally not included yet because the maintainer must choose the legal terms explicitly; until then, public visibility does not grant reuse rights. The release checklist and remaining distribution work are tracked in [`docs/public-release-plan.md`](docs/public-release-plan.md).
 

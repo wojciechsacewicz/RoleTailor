@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-Please report suspected vulnerabilities through GitHub's private vulnerability reporting for this repository. Do not open a public issue for a vulnerability, leaked credential, or report containing personal career data.
+Use GitHub's **Report a vulnerability** action when it is available in the repository's Security tab. If the private channel is not enabled yet, open a minimal public issue asking the maintainer to enable private reporting; do not include vulnerability details, leaked credentials, or personal career data in that issue.
 
 Include the affected version or commit, reproduction steps, impact, and any suggested mitigation. Reports will be acknowledged as soon as practical, but this project does not currently promise a fixed response SLA.
 
