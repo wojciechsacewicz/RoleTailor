@@ -1,12 +1,62 @@
-# RoleTailor
+<p align="center">
+  <img src="src-tauri/icons/icon.png" width="96" alt="RoleTailor icon">
+</p>
 
-RoleTailor is a local Tauri desktop app that turns a user-owned career profile into tailored, role-specific CVs and application copy. It uses the official Codex app server and Codex-managed ChatGPT authentication; there is no remote RoleTailor backend, telemetry, API-key field, or application-owned token store.
+<h1 align="center">RoleTailor</h1>
 
-## How it works
+<p align="center">
+  Turn one honest career profile into a focused CV for each role.
+</p>
 
-The first-run onboarding collects contact details, target roles, skills, experience, education, projects, languages, achievements, writing preferences, and an optional portrait. RoleTailor validates that data and generates a private Base CV under the operating system's application-data directory. The repository ships only a neutral template.
+RoleTailor is a local Linux desktop app for tailoring CVs and application copy with Codex. You describe your experience once during onboarding, paste a job listing, and get an editable two-page CV. RoleTailor tells Codex to ground every claim in facts you supplied, but you should review generated text before sending it.
 
-Each application run copies the Base CV into an isolated workspace, treats the job listing as untrusted input, and asks Codex to tailor only from confirmed profile facts. RoleTailor then runs the trusted local PDF builder, validates the artifacts, and stores run metadata in its local SQLite database.
+RoleTailor stores your profile and generated applications on your machine. It has no hosted RoleTailor backend, telemetry, API-key field, or token database. Codex-powered tailoring, AI cleanup, and editor features send prompts and relevant profile, job, message, and attachment content to OpenAI for model processing under your Codex account. Importing a job by URL also contacts that site directly. ChatGPT authentication stays in Codex's own auth store.
+
+> [!NOTE]
+> RoleTailor is usable today, but distribution is still source-first. The current packaged builds target x86_64 Linux.
+
+## Install
+
+### Let your agent handle it
+
+**Point your agent to this file: [`INSTALL.md`](INSTALL.md)**
+
+It contains the full setup runbook, including system packages, Codex login, verification, and launch commands. The agent should detect your Linux distribution and ask before using `sudo`.
+
+### Run it yourself
+
+You need Node.js, Rust, Chromium, the native Tauri 2 dependencies, and the Codex CLI signed in with ChatGPT. On Arch or CachyOS:
+
+```bash
+sudo pacman -S --needed \
+  base-devel webkit2gtk-4.1 libappindicator-gtk3 librsvg \
+  openssl appmenu-gtk-module xdotool patchelf chromium
+
+npm ci
+npm run tauri:dev
+```
+
+If you use Debian, Ubuntu, or Fedora, follow the distro commands in [`INSTALL.md`](INSTALL.md).
+
+## First run
+
+Onboarding asks for the material RoleTailor can use: contact details, target roles, skills, experience, education, projects, languages, achievements, and writing preferences. You can type your writing profile into the app or import a `SKILL.md`; the built-in tutorial explains how to create one from your own messages.
+
+RoleTailor turns that input into a private Base CV under your operating system's application-data directory. Editing your profile regenerates the Base CV. Each job application gets a separate workspace, so changes made for one role cannot bleed into another.
+
+```mermaid
+flowchart LR
+  A["Your career profile"] --> B["Private Base CV"]
+  J["Job listing"] --> C["Isolated application workspace"]
+  B --> C
+  C --> D["Codex tailoring pass"]
+  D --> E["Editable two-page CV"]
+  E --> F["Local PDF"]
+```
+
+## What stays local
+
+RoleTailor stores its SQLite database, profile, portrait, CV source, and generated runs in the local application-data directory:
 
 ```text
 application data/
@@ -20,31 +70,20 @@ application data/
   runs/<run-id>/workspace/
 ```
 
-Real profile data never needs to be committed to Git. Editing the profile regenerates the Base CV from the user's saved data; the standalone CV editor can then make local presentation changes.
+Job listings and attachments count as untrusted evidence, not instructions. Codex works inside the selected application workspace, generated artifact paths stay within that workspace, and the trusted local renderer creates the final PDF with Chromium.
 
-## Requirements
+## Development
 
-- Node.js and npm
-- Rust and the native Tauri 2 build dependencies
-- Chromium for local PDF rendering
-- the official Codex CLI, authenticated with ChatGPT
-
-On Arch/CachyOS, the native packages are:
+Install dependencies and launch the full desktop shell:
 
 ```bash
-sudo pacman -S --needed base-devel webkit2gtk-4.1 libappindicator-gtk3 librsvg patchelf chromium
-```
-
-Install JavaScript dependencies and start the desktop app:
-
-```bash
-npm install
+npm ci
 npm run tauri:dev
 ```
 
-`npm run dev` runs the frontend onboarding preview, but filesystem persistence, profile-photo selection, Codex authentication, and generation require the Tauri shell.
+`npm run dev` opens a browser preview of the frontend. Persistence, file selection, Codex authentication, and CV generation require the Tauri shell.
 
-## Verification
+Run the project checks with:
 
 ```bash
 npm run build
@@ -53,34 +92,23 @@ npm test
 cargo test --manifest-path src-tauri/Cargo.toml
 ```
 
-The production bundle is built with:
+Build Linux packages with:
 
 ```bash
 NO_STRIP=1 npm run tauri:build
 ```
 
-`NO_STRIP=1` avoids an incompatibility between linuxdeploy's older `strip` and current Arch libraries containing ELF `.relr.dyn` sections.
-The release wrapper still strips Rust symbols, remaps local source paths, and fails the build if the resulting binaries contain the developer's home or checkout path.
+The packages appear under `src-tauri/target/release/bundle/`. `NO_STRIP=1` works around an incompatibility between linuxdeploy's older `strip` and current Arch libraries with ELF `.relr.dyn` sections. The release wrapper still strips Rust symbols, remaps local source paths, and rejects binaries containing the builder's home or checkout path.
 
-## Security and privacy boundaries
+## Security, contributions, and protocol updates
 
-- Job listings and editor attachments are untrusted evidence, never instruction sources.
-- Codex runs inside an isolated per-application workspace with no approval prompts.
-- User-provided URLs are validated, artifact paths must remain under the saved run workspace, and imported photo filenames are normalized.
-- Debug output is memory-only and common secret/token patterns are redacted.
-- ChatGPT tokens remain in the Codex auth store and are not exposed to RoleTailor.
+Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before opening a pull request. Report vulnerabilities and accidental personal-data exposure through the process in [`SECURITY.md`](SECURITY.md); do not put sensitive details in a public issue.
 
-## Contributing and security
-
-Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before submitting changes. Security issues and accidental personal-data exposure should follow the reporting process in [`SECURITY.md`](SECURITY.md); never put sensitive details in a public issue.
-
-The repository is prepared as a clean public snapshot with neutral templates and no runtime profile data. A public license is intentionally not included yet because the maintainer must choose the legal terms explicitly; until then, public visibility does not grant reuse rights. The release checklist and remaining distribution work are tracked in [`docs/public-release-plan.md`](docs/public-release-plan.md).
-
-## Codex protocol maintenance
-
-The TypeScript protocol reference under `shared/codex-protocol/` is generated by the installed Codex binary. Regenerate and review it after a Codex upgrade rather than hand-inventing app-server methods:
+The TypeScript reference under `shared/codex-protocol/` comes from the installed Codex binary. After a Codex upgrade, regenerate it from the binary and review the diff:
 
 ```bash
 codex app-server generate-ts --experimental --out shared/codex-protocol
 codex app-server generate-json-schema --experimental --out /tmp/roletailor-schema
 ```
+
+The remaining release work lives in [`docs/public-release-plan.md`](docs/public-release-plan.md). This repository does not include a public license yet, so viewing the source does not grant permission to reuse or redistribute it.
