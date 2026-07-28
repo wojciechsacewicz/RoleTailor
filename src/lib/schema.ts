@@ -5,6 +5,11 @@ export type RunResult=z.infer<typeof resultSchema>;
 export type RunStatus='Draft'|'Fetching'|'Analysing'|'Tailoring CV'|'Building PDF'|'Completed'|'Failed'|'Cancelled';
 export type AnalysisProfile='luna-high'|'terra-high'|'sol-low';
 export interface JobPreview {company:string;role:string;location?:string;seniority?:string;technologies:string[];salary?:string;content:string;sourceUrl?:string}
+export interface JobRadarQuery {query:string;remoteOnly:boolean;juniorFriendly:boolean;maxAgeDays:number;minSalaryPln?:number;sources:string[];limit:number}
+export interface JobOffer {id:string;source:string;externalId:string;title:string;company:string;location?:string;workMode?:string;seniority?:string;salary?:string;salaryMinPln?:number;technologies:string[];description?:string;publishedAt?:string;deadline?:string;url:string;status:'active'|'uncertain'|'expired';score:number;betterThanIdego:boolean;reasons:string[];risks:string[];firstSeenAt:string;lastSeenAt:string}
+export interface JobSourceStatus {source:string;status:'ok'|'error'|'skipped';found:number;message?:string}
+export interface JobRadarResult {offers:JobOffer[];sources:JobSourceStatus[];fetchedAt:string}
+export interface JobValidationResult {status:'active'|'uncertain'|'expired';checkedAt:string;message:string}
 export interface RunSummary {id:string;company:string;role:string;status:RunStatus;createdAt:string;stars?:number;result?:RunResult;error?:string;activity?:string;lastActivity?:string;archived?:boolean}
 export interface ExperienceEntry {role:string;company:string;location?:string;startDate:string;endDate?:string;current:boolean;highlights:string[]}
 export interface EducationEntry {school:string;degree:string;field?:string;startDate?:string;endDate?:string}
