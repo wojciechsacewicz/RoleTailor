@@ -26,6 +26,7 @@ jobs:
           echo "6a3ea455e2ff75d3fefad00aa310dc1ec06350fb11742aeddf047c91aed53dda  /tmp/roletailor-rebuild.tar.gz" | sha256sum --check --strict
           tar --extract --gzip --file /tmp/roletailor-rebuild.tar.gz
           rm -rf .github/rebuild-payload
+          rm -f .github/rebuild-trigger
           rm .github/workflows/export-worktree.yml
 
       - name: Install Linux build dependencies
