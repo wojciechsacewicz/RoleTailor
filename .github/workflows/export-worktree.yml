@@ -4,6 +4,14 @@ on:
   push:
     branches:
       - feat/canvas-cv-workspace
+  pull_request:
+    branches:
+      - main
+    types:
+      - synchronize
+      - reopened
+      - ready_for_review
+      - edited
 
 permissions:
   contents: write
@@ -16,6 +24,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: feat/canvas-cv-workspace
 
       - name: Reconstruct the reviewed rebuild
         shell: bash
