@@ -16,11 +16,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Pack worktree
+      - name: Install JavaScript dependencies
+        run: npm ci
+      - name: Pack worktree and dependencies
         run: |
           tar --exclude=.git -czf /tmp/roletailor-worktree.tar.gz .
+          tar -czf /tmp/roletailor-node-modules.tar.gz node_modules
       - uses: actions/upload-artifact@v4
         with:
           name: roletailor-worktree
           path: /tmp/roletailor-worktree.tar.gz
+          retention-days: 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: roletailor-node-modules
+          path: /tmp/roletailor-node-modules.tar.gz
           retention-days: 1
