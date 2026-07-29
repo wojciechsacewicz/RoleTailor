@@ -1,0 +1,23 @@
+name: Export worktree
+
+on:
+  push:
+    branches:
+      - feat/canvas-cv-workspace
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pack worktree
+        run: |
+          tar --exclude=.git -czf /tmp/roletailor-worktree.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: roletailor-worktree
+          path: /tmp/roletailor-worktree.tar.gz
+          retention-days: 1
