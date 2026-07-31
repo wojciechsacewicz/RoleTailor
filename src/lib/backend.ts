@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import type { AnalysisProfile, CvReview, DebugEvent, EditorChatLine, EditorChatReply, EditorDocument, JobPreview, ProfileImportResult, ProfileImportSource, RunResult, RunSummary, SetupState, UserProfile } from "./schema";
+import type { AnalysisProfile, CvReview, DebugEvent, EditorChatLine, EditorChatReply, EditorDocument, JobPreview, JobRadarQuery, JobRadarResult, JobValidationResult, ProfileImportResult, ProfileImportSource, RunResult, RunSummary, SetupState, UserProfile } from "./schema";
 import { resultSchema } from "./schema";
 export const backend = {
   setup: () => invoke<SetupState>("setup_state"),
@@ -19,6 +19,9 @@ export const backend = {
   cancelLogin: (loginId: string) =>
     invoke<void>("cancel_chatgpt_login", { loginId }),
   fetchJob: (url: string) => invoke<JobPreview>("fetch_job", { url }),
+  searchJobs: (query: JobRadarQuery) => invoke<JobRadarResult>("search_jobs", { query }),
+  cachedJobs: (query: JobRadarQuery) => invoke<JobRadarResult>("cached_jobs", { query }),
+  validateJobOffer: (url: string) => invoke<JobValidationResult>("validate_job_offer", { url }),
   cleanupJob: (job: JobPreview) => invoke<JobPreview>("cleanup_job", { job }),
   startRun: (job: JobPreview, language: "auto" | "pl" | "en", analysisProfile: AnalysisProfile) =>
     invoke<string>("start_run", { job, language, analysisProfile }),

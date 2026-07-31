@@ -69,6 +69,10 @@ flowchart LR
   E --> F["Local PDF"]
 ```
 
+## Job Radar
+
+RoleTailor can scan Just Join IT, RocketJobs, No Fluff Jobs, TheProtocol, Pracuj.pl and the freehire startup/ATS index from a native Rust module. Results are cached in the local SQLite database, deduplicated, scored against the saved career profile and revalidated at the original URL before an offer is handed to the CV workflow. Each source fails independently; blocked or rate-limited portals are shown as uncertain instead of being treated as live.
+
 ## What stays local
 
 RoleTailor stores its SQLite database, profile, portrait, CV source, and generated runs in the local application-data directory:

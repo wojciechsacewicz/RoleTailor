@@ -1,6 +1,7 @@
 mod codex;
 mod db;
 mod job;
+mod job_radar;
 mod model;
 mod security;
 use chrono::Utc;
@@ -3237,6 +3238,9 @@ pub fn run() {
             login_chatgpt,
             cancel_chatgpt_login,
             fetch_job,
+            job_radar::search_jobs,
+            job_radar::cached_jobs,
+            job_radar::validate_job_offer,
             cleanup_job,
             start_run,
             open_base_editor,

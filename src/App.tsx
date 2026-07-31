@@ -14,6 +14,7 @@ import {
   Plus,
   Pencil,
   RotateCcw,
+  Search,
   Settings,
   Square,
   Star,
@@ -22,11 +23,13 @@ import {
   X,
 } from "lucide-react";
 import CvEditor from "./CvEditor";
+import JobRadar from "./JobRadar";
 import DebugPeek from "./DebugPeek";
 import Onboarding from "./Onboarding";
 import { backend, onDebugEvent, onRunEvent, parseResult } from "./lib/backend";
 import type {
   AnalysisProfile,
+  JobOffer,
   JobPreview,
   RunResult,
   RunStatus,
@@ -113,6 +116,7 @@ function Sidebar({
   onNew,
   onDelete,
   onEditor,
+  onRadar,
   onSettings,
 }: {
   runs: RunSummary[];
@@ -121,6 +125,7 @@ function Sidebar({
   onNew: () => void;
   onDelete: (id: string) => void;
   onEditor: () => void;
+  onRadar: () => void;
   onSettings: () => void;
 }) {
   const [armedDelete, setArmedDelete] = useState<string | null>(null);
@@ -129,6 +134,9 @@ function Sidebar({
       <button className="new-button" onClick={onNew}>
         <Plus />
         New Application<span>⌘ N</span>
+      </button>
+      <button className={`editor-nav-button ${selected === "radar" ? "active" : ""}`} onClick={onRadar}>
+        <Search /> Job Radar
       </button>
       <button className="editor-nav-button" onClick={onEditor}>
         <Pencil /> CV Editor
@@ -211,9 +219,11 @@ function SettingsView({ state, onChange, onError, onRestored, onEditProfile }: {
 function NewApplication({
   onStart,
   onError,
+  initialJob,
 }: {
   onStart: (job: JobPreview, lang: "auto" | "pl" | "en", profile: AnalysisProfile) => void;
   onError: (error: unknown) => void;
+  initialJob?: JobPreview | null;
 }) {
   const [mode, setMode] = useState<"url" | "text">("url");
   const [input, setInput] = useState("");
@@ -222,6 +232,12 @@ function NewApplication({
   const [cleaning, setCleaning] = useState(false);
   const [lang, setLang] = useState<"auto" | "pl" | "en">("auto");
   const [analysisProfile, setAnalysisProfile] = useState<AnalysisProfile>("luna-high");
+  useEffect(() => {
+    if (!initialJob) return;
+    setPreview(initialJob);
+    setMode("url");
+    setInput(initialJob.sourceUrl || "");
+  }, [initialJob]);
   const extract = async () => {
     setLoading(true);
     try {
@@ -610,6 +626,7 @@ export default function App() {
   const [setup, setSetup] = useState<SetupState | null>(null);
   const [runs, setRuns] = useState<RunSummary[]>([]);
   const [selected, setSelected] = useState("new");
+  const [seedJob, setSeedJob] = useState<JobPreview | null>(null);
   const [editorRunId, setEditorRunId] = useState<string | null>(null);
   const [profileEditing, setProfileEditing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -697,6 +714,7 @@ export default function App() {
       const id = await backend.startRun(job, language, analysisProfile);
       const history = await backend.history();
       setRuns((current) => mergeRunHistory(current, history));
+      setSeedJob(null);
       setSelected(id);
     } catch (error) { reportError(error); }
   };
@@ -730,6 +748,12 @@ export default function App() {
       setEditorRunId(await backend.openBaseEditor());
     } catch (error) { reportError(error); }
   };
+  const tailorOffer = async (offer: JobOffer) => {
+    const preview = await backend.fetchJob(offer.url);
+    setSeedJob(preview);
+    setEditorRunId(null);
+    setSelected("new");
+  };
   return (
     <div className="app">
       <Titlebar />
@@ -738,16 +762,19 @@ export default function App() {
           runs={runs}
           selected={selected}
           onSelect={(id) => { setEditorRunId(null); setSelected(id); }}
-          onNew={() => { setEditorRunId(null); setSelected("new"); }}
+          onNew={() => { setSeedJob(null); setEditorRunId(null); setSelected("new"); }}
           onDelete={(id) => void deleteRun(id)}
           onEditor={() => void openEditor()}
+          onRadar={() => { setEditorRunId(null); setSelected("radar"); }}
           onSettings={() => setSelected("settings")}
         />
         <main className="main">
-          {selected === "settings" ? (
+          {selected === "radar" ? (
+            <JobRadar profile={setup.profile!} onTailor={tailorOffer} onError={reportError} />
+          ) : selected === "settings" ? (
             <SettingsView state={setup} onChange={setSetup} onError={reportError} onEditProfile={() => setProfileEditing(true)} onRestored={() => { void backend.history().then(setRuns).catch(reportError); }} />
           ) : selected === "new" ? (
-            <NewApplication onStart={start} onError={reportError} />
+            <NewApplication initialJob={seedJob} onStart={start} onError={reportError} />
           ) : current?.status === "Completed" && current.result ? (
             <Result
               result={current.result}
@@ -762,7 +789,7 @@ export default function App() {
               onEdit={() => setEditorRunId(current.id)}
             />
           ) : (
-            <NewApplication onStart={start} onError={reportError} />
+            <NewApplication initialJob={seedJob} onStart={start} onError={reportError} />
           )}
         </main>
       </div>
